@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,29 +18,61 @@ public class Lexer {
         Map<String, Integer> dic = new HashMap<String, Integer>();
         Map<String, String> dic_token = new HashMap<String, String>();
 
+
         dic.put( "algoritmo", 1 );
+        dic.put( "cadena", 1 );
         dic.put( "proceso", 1 );
         dic.put( "subproceso", 1 );
         dic.put( "finsubproceso", 1 );
         dic.put( "finproceso", 1 );
         dic.put( "finalgoritmo", 1 );
-
         dic.put( "definir", 1 );
-
         dic.put( "como", 1 );
-
         dic.put( "real", 1 );
         dic.put( "entero", 1 );
         dic.put( "numerico", 1 );
+        dic.put( "numero", 1 );
         dic.put( "logico", 1 );
         dic.put( "caracter", 1 );
-
         dic.put( "mientras", 1 );
         dic.put( "hacer", 1 );
         dic.put( "finmientras", 1 );
-
         dic.put( "si", 1 );
         dic.put( "finsi", 1 );
+        dic.put( "para", 1 );
+        dic.put( "hasta", 1 );
+        dic.put( "con", 1 );
+        dic.put( "paso", 1 );
+        dic.put( "leer", 1 );
+        dic.put( "finpara", 1 );
+        dic.put( "escribir", 1 );
+        dic.put( "borrar", 1 );
+        dic.put( "pantalla", 1 );
+        dic.put( "tecla", 1 );
+        dic.put( "esperar", 1 );
+        dic.put( "segundos", 1 );
+        dic.put( "milisegundos", 1 );
+        dic.put( "si", 1 );
+        dic.put( "entonces", 1 );
+        dic.put( "sino", 1 );
+        dic.put( "funcion", 1 );
+        dic.put( "finfuncion", 1 );
+        dic.put( "finsi", 1 );
+        dic.put( "segun", 1 );
+        dic.put( "hacer", 1 );
+        dic.put( "de", 1 );
+        dic.put( "otro", 1 );
+        dic.put( "modo", 1 );
+        dic.put( "finsegun", 1 );
+        dic.put( "repetir", 1 );
+        dic.put( "hasta", 1 );
+        dic.put( "que", 1 );
+        dic.put( "verdadero", 1 );
+        dic.put( "falso", 1 );
+        dic.put( "dimension", 1 );
+        dic.put( "limpiar", 1 );
+        dic.put( "texto", 1 );
+
 
         dic.put( "~", 2 );
         dic.put( "no", 2 );
@@ -68,36 +101,8 @@ public class Lexer {
         dic.put( "y", 22 );
         dic.put( ",", 23 );
         dic.put( "^", 24 );
-        dic.put( "para", 1 );
-        dic.put( "hasta", 1 );
-        dic.put( "con", 1 );
-        dic.put( "paso", 1 );
-        dic.put( "leer", 1 );
-        dic.put( "finpara", 1 );
-        dic.put( "escribir", 1 );
-        dic.put( "borrar", 1 );
-        dic.put( "pantalla", 1 );
-        dic.put( "tecla", 1 );
-        dic.put( "esperar", 1 );
-        dic.put( "esperar", 1 );
-        dic.put( "segundos", 1 );
-        dic.put( "milisegundos", 1 );
-        dic.put( "si", 1 );
-        dic.put( "entonces", 1 );
-        dic.put( "sino", 1 );
-        dic.put( "finsi", 1 );
-        dic.put( "segun", 1 );
-        dic.put( "hacer", 1 );
-        dic.put( "de", 1 );
-        dic.put( "otro", 1 );
-        dic.put( "modo", 1 );
-        dic.put( "finsegun", 1 );
-        dic.put( "segun", 1 );
-        dic.put( "repetir", 1 );
-        dic.put( "hasta", 1 );
-        dic.put( "que", 1 );
-        dic.put( "verdadero", 1 );
-        dic.put( "falso", 1 );
+
+
 
         dic_token.put( "~", "token_neg" );
         dic_token.put( "no", "token_neg" );
@@ -127,6 +132,7 @@ public class Lexer {
         dic_token.put( ",", "token_coma" );
         dic_token.put( "^", "token_pot" );
 
+
         String e = "", t = "";
         int state = 0, nextState = 0, row_counter = 1, tokenStart = 0;
         boolean error = false;
@@ -138,7 +144,7 @@ public class Lexer {
                     case -1:
                         break;
                     case 0:
-                        if(e.charAt(j) == ' ')
+                        if(e.charAt(j) == ' ' || e.charAt(j) == '\t')
                             nextState = 0;
                         else if (check.isAlphabetic(e.charAt(j))) {
                             nextState = 2;
@@ -169,11 +175,16 @@ public class Lexer {
                         }
                         break;
                     case 1:
-                        if( e.charAt(j) != '\'' &&  e.charAt(j) != '\"')
+                        if( e.charAt(j) != '\'' &&  e.charAt(j) != '\"' )
                             nextState = 1;
                         else{
                             System.out.println("<token_cadena," + e.substring(tokenStart, j) + "," + row_counter + "," + (tokenStart) + ">");
                             nextState = 0;
+                        }
+                        if (  j == e.length()-1  ) {
+                            nextState = 9;
+                            tokenStart--;
+                            j--;
                         }
                         break;
 
@@ -219,8 +230,8 @@ public class Lexer {
                         if( check.isNumber(e.charAt(j)) )
                             nextState = 7;
                         else{
-                            nextState = 9;
-                            j--;
+                            nextState = 5;
+                            j-=2;
                         }
                         break;
                     case 7:
@@ -245,7 +256,7 @@ public class Lexer {
                     case 11:
                         if(e.charAt(j) == '/')
                             nextState = 15;
-                        else if( check.isAlphabetic(e.charAt(j)) || check.isNumber(e.charAt(j)) ) {
+                        else{
                             nextState = 16;
                             j--;
                         }
