@@ -8,7 +8,7 @@ public class Predicter {
 
     private Map<String, ArrayList<String>> primeros;
     private Map<String, ArrayList<String>> siguientes;
-    private Map<String, ArrayList<String>> prediccion;
+    private Map<String, ArrayList<ArrayList<String>>> prediccion;
 
     public String first;
     public static final String EMPTY = "$";
@@ -18,7 +18,7 @@ public class Predicter {
         Gram = new HashMap< String, ArrayList<ArrayList<String>> >();
         primeros = new HashMap<String, ArrayList<String>>();
         siguientes = new HashMap<String, ArrayList<String>>();
-        prediccion = new HashMap<String, ArrayList<String>>();
+        prediccion = new HashMap<String, ArrayList<ArrayList<String>>>();
     }
 
     public void recorrerGramaticaPrimeros(String key){
@@ -72,6 +72,45 @@ public class Predicter {
         }
     }
 
+    public ArrayList<String> recorrerGramaticaPrimerosAux(String key, int regla){
+        ArrayList<String> put = Gram.get(key).get(regla);
+        ArrayList<String> back, empty;
+        empty = new ArrayList<String>();
+        empty.add(EMPTY);
+
+        ArrayList<String> pr = new ArrayList<String>();
+
+        if( put.equals( empty ) ){
+            pr.add( EMPTY );
+        }else {
+            for (int j = 0; j < put.size(); j++) {
+
+                if ( !Gram.containsKey(put.get(j))){
+                    pr.add(put.get(j));
+                    break;
+                } else {
+                    back = new ArrayList<String>( primeros.get( put.get(j) ) );
+
+                    back.remove(EMPTY);
+                    pr.addAll(back);
+
+                    if ( primeros.get( put.get(j)).contains(EMPTY) ) {
+                        if (put.size() - (j+1) == 0) {
+                            pr.add(EMPTY);
+                            break;
+                        }else{
+                            continue;
+                        }
+                    }else{
+                        break;
+                    }
+                }
+            }
+        }
+        return pr;
+    }
+
+
     public void nivelarPrimerosDesconectados(){
         for ( String key : Gram.keySet())
         {
@@ -112,7 +151,6 @@ public class Predicter {
 
         for (Map.Entry<String, ArrayList<ArrayList<String>>> entry : Gram.entrySet())
         {
-            key = entry.getKey();
             reglas = entry.getValue();
             for( int i = 0; i < reglas.size(); i++ ) {
                 if (!reglas.get(i).equals(empty)){
@@ -171,15 +209,19 @@ public class Predicter {
     }
 
     public void calcularPrediccion(){
-        ArrayList<String> pred;
+        ArrayList<String> pred, primer;
         for (String key : Gram.keySet())
         {
-            pred = primeros.get(key);
-            if( primeros.get(key).contains(EMPTY) ) {
-                pred.remove(EMPTY);
-                pred.addAll(siguientes.get(key));
+            if( !prediccion.containsKey(key) )
+                prediccion.put(key, new ArrayList<ArrayList<String>>() );
+            for( int i = 0; i < Gram.get(key).size(); i++ ){
+                primer = recorrerGramaticaPrimerosAux( key, i );
+                if( primer.contains(EMPTY) ){
+                    primer.remove(EMPTY);
+                    primer.addAll( siguientes.get(key) );
+                }
+                prediccion.get(key).add(primer);
             }
-            prediccion.put(key, pred);
         }
     }
 
@@ -206,10 +248,26 @@ public class Predicter {
         }
     }
     public void imprimirPrediccion(){
-        ArrayList<String> put;
-        for (Map.Entry<String, ArrayList<String>> entry : prediccion.entrySet())
+        ArrayList<ArrayList<String>> put;
+        String key;
+        for (Map.Entry<String, ArrayList<ArrayList<String>>> entry : prediccion.entrySet())
         {
-            System.out.println(entry.getKey() + "/" + entry.getValue());
+            key = entry.getKey();
+            for( int j = 0; j < Gram.get(key).size(); j++ ){
+                System.out.println( key+" -> "+Gram.get(key).get(j) +" Primeros: "+prediccion.get( key).get( j ) + " " );
+            }
+        }
+    }
+
+    public void imprimirPrimerosPorRegla(){
+        ArrayList<ArrayList<String>> put;
+        String key;
+        for (Map.Entry<String, ArrayList<ArrayList<String>>> entry : Gram.entrySet())
+        {
+            key = entry.getKey();
+                for( int j = 0; j < Gram.get(key).size(); j++ ){
+                    System.out.println( key+" -> "+Gram.get(key).get(j) +" Primeros: "+recorrerGramaticaPrimerosAux( key, j ) + " " );
+                }
         }
     }
 
@@ -250,8 +308,13 @@ public class Predicter {
         System.out.println();
         pred.calcularSiguientes();
         pred.imprimirSiguientes();
+
+        System.out.println();
+        pred.imprimirPrimerosPorRegla();
+
         System.out.println();
         pred.calcularPrediccion();
         pred.imprimirPrediccion();
+
     }
 }
