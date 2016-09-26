@@ -1,6 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 
 public class Predicter {
@@ -9,6 +7,7 @@ public class Predicter {
     private Map<String, ArrayList<String>> primeros;
     private Map<String, ArrayList<String>> siguientes;
     private Map<String, ArrayList<ArrayList<String>>> prediccion;
+    private Map<String, ArrayList<ArrayList<String>>> errores;
 
     public String first;
     public static final String EMPTY = "$";
@@ -254,7 +253,7 @@ public class Predicter {
         {
             key = entry.getKey();
             for( int j = 0; j < Gram.get(key).size(); j++ ){
-                System.out.println( key+" -> "+Gram.get(key).get(j) +" Primeros: "+prediccion.get( key).get( j ) + " " );
+                System.out.println( key+" -> "+Gram.get(key).get(j) +"              Prediccion: "+prediccion.get( key).get( j ) + " " );
             }
         }
     }
@@ -266,13 +265,124 @@ public class Predicter {
         {
             key = entry.getKey();
                 for( int j = 0; j < Gram.get(key).size(); j++ ){
-                    System.out.println( key+" -> "+Gram.get(key).get(j) +" Primeros: "+recorrerGramaticaPrimerosAux( key, j ) + " " );
+                    System.out.println( key+" -> "+Gram.get(key).get(j) +"      Primeros: "+recorrerGramaticaPrimerosAux( key, j ) + " " );
                 }
         }
     }
 
-    public void crearArchivo(){
+    public void crearArchivo() throws FileNotFoundException, UnsupportedEncodingException {
+        PrintWriter writer = new PrintWriter("C:\\Users\\abad_\\Desktop\\LenguajesUNAL\\src\\Sintax.java", "UTF-8");
 
+        writer.println("import java.io.BufferedReader;");
+        writer.println("import java.io.IOException;");
+        writer.println("import java.io.InputStreamReader;");
+        writer.println("import java.util.ArrayList;");
+
+        writer.println("class Sintax{");
+
+
+        writer.println("    public ArrayList<ArrayList<String>> tokens;");
+        writer.println("    private ArrayList<String> nextToken;");
+        writer.println("    private int iden;");
+
+        writer.println("    public Sintax(){");
+        writer.println("        tokens = new ArrayList<ArrayList<String>>();");
+        writer.println("        iden = 0;");
+        writer.println("    }");
+
+        for( String key: Gram.keySet() ){
+            ArrayList<ArrayList<String>> put = prediccion.get(key);
+            writer.println("public void "+key+"(){");
+            writer.println("String error;");
+            writer.println("    switch(nextToken.get(0)){");
+            for( int i = 0; i < put.size(); i++ ){
+                for( int k = 0; k < prediccion.get(key).get(i).size(); k++ ){
+                    writer.println("    case \""+prediccion.get(key).get(i).get(k)+"\": ");
+                    for( int l = 0; l < Gram.get(key).get(i).size(); l++ ){
+                        if( Gram.containsKey( Gram.get(key).get(i).get(l) ) )
+                            writer.println("   "+Gram.get(key).get(i).get(l)+"();");
+                        else {
+                            writer.println("   emparejar(\"" + Gram.get(key).get(i).get(l) + "\");");
+                        }
+                    }
+                    writer.println("        ");
+                    writer.println("        break;");
+                }
+            }
+            writer.println("        case \"?\":");
+            if( key.equals( "PROCESO_PROG" ) )
+                writer.println("        errorSintactico(\"Error sintactico: falta proceso\");");
+            else if( !key.equals("PROCESO_AUX") )
+                writer.println("            break;");
+
+            writer.println("        default:");
+            String error = "";
+            error += "\"\"+nextToken.get(1)+\"";
+            error += " Error sintactico: se encontro: ";
+            error += "\"+nextToken.get(0)+\"";
+            error += "; se esperaba: \";";
+            //writer.println("            String error = \"\"+nextToken.get(1)+\" Error sintactico: se encontro: \"+nextToken.get(0)+\"; se esperaba: \";");
+            writer.println("            error = "+error);
+            error = "";
+            for( int a = 0; a < prediccion.get(key).size(); a++ ){
+                for( int b = 0; b < prediccion.get(key).get(a).size(); b++){
+                    error += ""+prediccion.get(key).get(a).get(b)+","  ;
+                }
+            }
+            error = error.substring(0,error.length()-1);
+            error += ";";
+            writer.println("            error += \""+error+"\";");
+            writer.println("            errorSintactico(error);");
+            writer.println("            System.out.println(\""+key+"\");");
+            writer.println("            break;");
+            writer.println("    }");
+            writer.println("}");
+        }
+
+        writer.println("    private void emparejar(String tokenEmp){");
+        writer.println("        if( !tokenEmp.equals( \"$\" ) ){");
+        writer.println("            if( nextToken.get(0).equals( tokenEmp) ){");
+        writer.println("                getToken();");
+        writer.println("            }else{");
+        writer.println("                errorSintactico( nextToken.get(1)+\" Error sintactico: se encontro: \"+nextToken.get(0)+\"; se esperaba: \"+tokenEmp+\".\" );");
+        writer.println("                System.out.println(\"emparejar(\"+tokenEmp+\")\");");
+        writer.println("            }");
+        writer.println("        }");
+        writer.println("    }");
+
+        writer.println("    private void errorSintactico( String error ){");
+        writer.println("        System.out.println(error);");
+        writer.println("        System.exit(0);");
+        writer.println("    }");
+
+        writer.println("    public void getToken(){");
+        writer.println("        nextToken = tokens.get(iden);");
+        writer.println("        iden++;");
+        writer.println("    }");
+
+        writer.println("    public static void main( String args[] ) throws IOException {");
+        writer.println("        Sintax sin = new Sintax();");
+        writer.println("        Lexer lex = new Lexer();");
+        writer.println("        ArrayList<ArrayList<String>> aux;");
+        writer.println("        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));");
+        writer.println("        String e;");
+        writer.println("        while ( ( e = br.readLine()) != null ) {");
+        writer.println("            if( e.equals( \"exit\" ) ) break;");
+        writer.println("            aux = lex.analyseLine( e );");
+        writer.println("            for( ArrayList<String> line: aux ) {");
+        writer.println("                sin.tokens.add(line);");
+        writer.println("            }");
+        writer.println("        }");
+        writer.println("        ArrayList<String> b = new ArrayList<String>();");
+        writer.println("        b.add(\"?\");");
+        writer.println("        b.add(\"<0,0>\");");
+        writer.println("        sin.tokens.add( b );");
+        writer.println("        sin.getToken();");
+        writer.println("        sin.PROGRAMA();");
+        writer.println("        System.out.println(\"El analisis sintactico ha finalizado correctamente.\");");
+        writer.println("    }");
+        writer.println("}");
+        writer.close();
     }
 
     public static  void main( String[] args ) throws IOException{
@@ -285,6 +395,7 @@ public class Predicter {
         String[] der;
         ArrayList<ArrayList<String>> put;
         while ( ( e = br.readLine()) != null ) {
+            if( e.equals("") ) continue;
             if( e.equals( "exit" ) ) break;
             exp = e.split(" -> ");
             izq = exp[0];
@@ -305,6 +416,7 @@ public class Predicter {
         }
         pred.calcularPrimeros();
         pred.imprimirPrimeros();
+
         System.out.println();
         pred.calcularSiguientes();
         pred.imprimirSiguientes();
@@ -315,6 +427,8 @@ public class Predicter {
         System.out.println();
         pred.calcularPrediccion();
         pred.imprimirPrediccion();
-
+        pred.crearArchivo();
     }
 }
+
+
