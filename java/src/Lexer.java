@@ -6,8 +6,10 @@ import java.util.*;
 public class Lexer {
     private Map<String, Integer> dic;
     private Map<String, String> dic_token;
+    public int counter;
 
     public Lexer(){
+        counter = 0;
         dic = new HashMap<String, Integer>();
         dic_token = new HashMap<String, String>();
         dic.put( "algoritmo", 1 );
@@ -50,6 +52,7 @@ public class Lexer {
         dic.put( "finfuncion", 1 );
         dic.put( "finsi", 1 );
         dic.put( "segun", 1 );
+        dic.put( "caso", 1 );
         dic.put( "hacer", 1 );
         dic.put( "de", 1 );
         dic.put( "otro", 1 );
@@ -132,7 +135,263 @@ public class Lexer {
         return (((int) letter >= (int)'A' && (int) letter <= (int)'Z') || ((int) letter >= (int)'a' && (int) letter <= (int)'z'));
     }
 
-    public ArrayList<String> analyseLine(String e ){
+    /*public ArrayList<ArrayList<String>> analyseLine(String e ){
+        ArrayList<ArrayList<String>> resp = new ArrayList<ArrayList<String>>();
+        ArrayList<String> aux;
+        String t = "";
+        boolean error = false;
+
+        int state = 0, nextState = 0, counter = 1, tokenStart = 0;
+        e = e + "\0";
+        state = 0; nextState = 0; tokenStart = 0;
+
+        for(int j = 0; j < e.length() && !error; j++) {
+            switch (state){
+                case -1:
+                    break;
+                case 0:
+                    if(e.charAt(j) == ' ' || e.charAt(j) == '\t')
+                        nextState = 0;
+                    else if (isAlphabetic(e.charAt(j))) {
+                        nextState = 2;
+                        tokenStart = j;
+                    }else if (isNumber(e.charAt(j))) {
+                        nextState = 4;
+                        tokenStart = j;
+                    }else if (e.charAt(j) == '\'' || e.charAt(j) == '\"') {
+                        nextState = 1;
+                        tokenStart = j + 1;
+                    }else if (e.charAt(j) == '/') {
+                        nextState = 11;
+                        tokenStart = j;
+                    }else if ( e.charAt(j) == '<' ){
+                        nextState = 17;
+                        tokenStart = j;
+                    }else if( e.charAt(j) == '>' ){
+                        nextState = 18;
+                        tokenStart = j;
+                    }else if (  dic.containsKey(e.substring(j,j+1)) && dic.get(e.substring(j, j+1)) != 1 ) {
+                        nextState = 13;
+                        tokenStart = j;
+                    }else if ( e.charAt(j) == '\0' )
+                        nextState = -1;
+                    else{
+                        nextState = 8;
+                        j--;
+                    }
+                    break;
+                case 1:
+                    if( e.charAt(j) != '\'' &&  e.charAt(j) != '\"' )
+                        nextState = 1;
+                    else{
+                        aux = new ArrayList<String>();
+                        //resp.add("<token_cadena," + e.substring(tokenStart, j) + "," + row_counter + "," + (tokenStart) + ">");
+                        aux.add("token_cadena");
+                        aux.add("<"+row_counter+","+tokenStart+">");
+                        resp.add( aux );
+                        nextState = 0;
+                    }
+                    if (  j == e.length()-1  ) {
+                        nextState = 9;
+                        tokenStart--;
+                        j--;
+                    }
+                    break;
+
+                case 2:
+                    if(isAlphabetic(e.charAt(j)) ||isNumber(e.charAt(j)) || e.charAt(j) == '_')
+                        nextState = 2;
+                    else {
+                        nextState = 3;
+                        j--;
+                    }
+                    break;
+                case 3:
+                    t = e.substring(tokenStart, j).toLowerCase();
+                    if ( dic.containsKey(t) ) {
+                        if( dic.get(t) != 1 ) {
+                            aux = new ArrayList<String>();
+                            //resp.add("<" + dic_token.get(t) + "," + row_counter + "," + (tokenStart + 1) + ">");
+                            aux.add(""+dic_token.get(t));
+                            aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                            resp.add(aux);
+                        }else{
+                            aux = new ArrayList<String>();
+                            //resp.add("<" + t + "," + row_counter + "," + (tokenStart + 1) + ">");
+                            aux.add(t);
+                            aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                            resp.add(aux);
+                        }
+                    }else{
+                        aux = new ArrayList<String>();
+                        //resp.add("<id," + t + "," + row_counter + "," + (tokenStart + 1) + ">");
+                        aux.add("id");
+                        aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                        resp.add(aux);
+                    }
+                    nextState = 0;
+                    j--;
+                    break;
+                case 4:
+                    if( isNumber(e.charAt(j)) )
+                        nextState = 4;
+                    else if( e.charAt(j) == '.' )
+                        nextState = 6;
+                    else if ( isAlphabetic(e.charAt(j)) ){
+                        nextState = 9;
+                        j--;
+                    }else{
+                        nextState = 5;
+                        j--;
+                    }
+                    break;
+                case 5:
+                    aux = new ArrayList<String>();
+                    //resp.add("<token_entero," + e.substring(tokenStart,j) + "," + row_counter + "," + (tokenStart + 1) + ">");
+                    aux.add("token_entero");
+                    aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                    resp.add(aux);
+                    nextState = 0;
+                    j--;
+                    break;
+                case 6:
+                    if( isNumber(e.charAt(j)) )
+                        nextState = 7;
+                    else{
+                        nextState = 5;
+                        j-=2;
+                    }
+                    break;
+                case 7:
+                    if( isNumber(e.charAt(j)) )
+                        nextState = 7;
+                    else {
+                        aux = new ArrayList<String>();
+                        //resp.add("<token_real," + e.substring(tokenStart, j) + "," + row_counter + "," + (tokenStart + 1) + ">");
+                        aux.add("token_real");
+                        aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                        resp.add(aux);
+                        j--;
+                        nextState = 0;
+                    }
+                    break;
+
+                case 8:
+
+                    //resp.add(">>> Error lexico (linea: " + row_counter + ", posicion: " + (j + 1) + ")");
+
+                    error = true;
+                    break;
+                case 9:
+                    //resp.add(">>> Error lexico (linea: " + row_counter + ", posicion: " + (tokenStart + 1) + ")");
+                    error = true;
+                    break;
+
+                case 11:
+                    if(e.charAt(j) == '/')
+                        nextState = 15;
+                    else{
+                        nextState = 16;
+                        j--;
+                    }
+                    break;
+                case 13:
+                    t = e.substring(tokenStart, j);
+                    aux = new ArrayList<String>();
+                    //resp.add("<" + dic_token.get(t) + "," + row_counter + "," + (tokenStart + 1) + ">");
+                    aux.add(""+dic_token.get(t));
+                    aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                    nextState = 0;
+                    j--;
+                    break;
+                case 15:
+                    nextState = 15;
+                    break;
+                case 16:
+                    aux = new ArrayList<String>();
+                    //resp.add("<token_div," + row_counter + "," + (tokenStart + 1) + ">");
+                    aux.add("token_div");
+                    aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                    resp.add(aux);
+                    nextState = 0;
+                    j--;
+                    break;
+                case 17:
+                    if( e.charAt(j) == '-' )
+                        nextState = 19;
+                    else if( e.charAt(j) == '=')
+                        nextState = 20;
+                    else if( e.charAt(j) == '>')
+                        nextState = 21;
+                    else{
+                        aux = new ArrayList<String>();
+                        //resp.add("<token_menor," + row_counter + "," + (tokenStart + 1) + ">");
+                        aux.add("token_menor");
+                        aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                        resp.add(aux);
+                        nextState = 0;
+                        j--;
+                    }
+                    break;
+                case 18:
+                    if( e.charAt(j) == '=')
+                        nextState = 22;
+                    else{
+                        aux = new ArrayList<String>();
+                        //resp.add("<token_mayor," + row_counter + "," + (tokenStart + 1) + ">");
+                        aux.add("token_mayor");
+                        aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                        resp.add(aux);
+                        nextState = 0;
+                        j--;
+                    }
+                    break;
+                case 19:
+                    aux = new ArrayList<String>();
+                    //resp.add("<token_asig," + row_counter + "," + (tokenStart + 1) + ">");
+                    aux.add("token_asig");
+                    aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                    resp.add(aux);
+                    nextState = 0;
+                    j--;
+                    break;
+                case 20:
+                    aux = new ArrayList<String>();
+                    //resp.add("<token_menor_igual," + row_counter + "," + (tokenStart + 1) + ">");
+                    aux.add("token_menor_igual");
+                    aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                    resp.add(aux);
+                    nextState = 0;
+                    j--;
+                    break;
+                case 21:
+                    aux = new ArrayList<String>();
+                    //resp.add("<token_dif," + row_counter + "," + (tokenStart + 1) + ">");
+                    aux.add("token_dif");
+                    aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                    resp.add(aux);
+                    nextState = 0;
+                    j--;
+                    break;
+                case 22:
+                    aux = new ArrayList<String>();
+                    //resp.add("<token_mayor_igual," + row_counter + "," + (tokenStart + 1) + ">");
+                    aux.add("token_mayor_igual");
+                    aux.add("<"+row_counter+","+(tokenStart + 1)+">");
+                    resp.add(aux);
+                    nextState = 0;
+                    j--;
+                    break;
+            }
+            state = nextState;
+        }
+        row_counter++;
+
+        return resp;
+    }*/
+
+    public ArrayList<ArrayList<String>> analyseLine(String e ){
+        counter++;
         ArrayList<String> resp = new ArrayList<String>();
         String t = "";
         boolean error = false;
@@ -180,7 +439,7 @@ public class Lexer {
                     if( e.charAt(j) != '\'' &&  e.charAt(j) != '\"' )
                         nextState = 1;
                     else{
-                        resp.add("<token_cadena," + e.substring(tokenStart, j) + "," + row_counter + "," + (tokenStart) + ">");
+                        resp.add("token_cadena-<" + counter + "," + (tokenStart) + ">");
                         nextState = 0;
                     }
                     if (  j == e.length()-1  ) {
@@ -202,11 +461,11 @@ public class Lexer {
                     t = e.substring(tokenStart, j).toLowerCase();
                     if ( dic.containsKey(t) ) {
                         if( dic.get(t) != 1 )
-                            resp.add("<" + dic_token.get(t) + "," + row_counter + "," + (tokenStart + 1) + ">");
+                            resp.add("" + dic_token.get(t) + "-<" + counter + "," + (tokenStart + 1) + ">");
                         else
-                            resp.add("<" + t + "," + row_counter + "," + (tokenStart + 1) + ">");
+                            resp.add("" + t + "-<" + counter + "," + (tokenStart + 1) + ">");
                     }else
-                        resp.add("<id," + t + "," + row_counter + "," + (tokenStart + 1) + ">");
+                        resp.add("id-<" + counter + "," + (tokenStart + 1) + ">");
                     nextState = 0;
                     j--;
                     break;
@@ -224,7 +483,7 @@ public class Lexer {
                     }
                     break;
                 case 5:
-                    resp.add("<token_entero," + e.substring(tokenStart,j) + "," + row_counter + "," + (tokenStart + 1) + ">");
+                    resp.add("token_entero-<" + counter + "," + (tokenStart + 1) + ">");
                     nextState = 0;
                     j--;
                     break;
@@ -240,18 +499,18 @@ public class Lexer {
                     if( isNumber(e.charAt(j)) )
                         nextState = 7;
                     else {
-                        resp.add("<token_real," + e.substring(tokenStart, j) + "," + row_counter + "," + (tokenStart + 1) + ">");
+                        resp.add("token_real-<" + counter + "," + (tokenStart + 1) + ">");
                         j--;
                         nextState = 0;
                     }
                     break;
 
                 case 8:
-                    resp.add(">>> Error lexico (linea: " + row_counter + ", posicion: " + (j + 1) + ")");
+                    resp.add(">>> Error lexico (linea: " + counter + ", posicion: " + (j + 1) + ")");
                     error = true;
                     break;
                 case 9:
-                    resp.add(">>> Error lexico (linea: " + row_counter + ", posicion: " + (tokenStart + 1) + ")");
+                    resp.add(">>> Error lexico (linea: " + counter + ", posicion: " + (tokenStart + 1) + ")");
                     error = true;
                     break;
 
@@ -265,7 +524,7 @@ public class Lexer {
                     break;
                 case 13:
                     t = e.substring(tokenStart, j);
-                    resp.add("<" + dic_token.get(t) + "," + row_counter + "," + (tokenStart + 1) + ">");
+                    resp.add("" + dic_token.get(t) + "-<" + counter + "," + (tokenStart + 1) + ">");
                     nextState = 0;
                     j--;
                     break;
@@ -273,7 +532,7 @@ public class Lexer {
                     nextState = 15;
                     break;
                 case 16:
-                    resp.add("<token_div," + row_counter + "," + (tokenStart + 1) + ">");
+                    resp.add("token_div-<" + counter + "," + (tokenStart + 1) + ">");
                     nextState = 0;
                     j--;
                     break;
@@ -285,7 +544,7 @@ public class Lexer {
                     else if( e.charAt(j) == '>')
                         nextState = 21;
                     else{
-                        resp.add("<token_menor," + row_counter + "," + (tokenStart + 1) + ">");
+                        resp.add("token_menor-<" + counter + "," + (tokenStart + 1) + ">");
                         nextState = 0;
                         j--;
                     }
@@ -294,233 +553,59 @@ public class Lexer {
                     if( e.charAt(j) == '=')
                         nextState = 22;
                     else{
-                        resp.add("<token_mayor," + row_counter + "," + (tokenStart + 1) + ">");
+                        resp.add("token_mayor-<" + counter + "," + (tokenStart + 1) + ">");
                         nextState = 0;
                         j--;
                     }
                     break;
                 case 19:
-                    resp.add("<token_asig," + row_counter + "," + (tokenStart + 1) + ">");
+                    resp.add("token_asig-<" + counter + "," + (tokenStart + 1) + ">");
                     nextState = 0;
                     j--;
                     break;
                 case 20:
-                    resp.add("<token_menor_igual," + row_counter + "," + (tokenStart + 1) + ">");
+                    resp.add("token_menor_igual-<" + counter + "," + (tokenStart + 1) + ">");
                     nextState = 0;
                     j--;
                     break;
                 case 21:
-                    resp.add("<token_dif," + row_counter + "," + (tokenStart + 1) + ">");
+                    resp.add("token_dif-<" + counter + "," + (tokenStart + 1) + ">");
                     nextState = 0;
                     j--;
                     break;
                 case 22:
-                    resp.add("<token_mayor_igual," + row_counter + "," + (tokenStart + 1) + ">");
+                    resp.add("token_mayor_igual-<" + counter + "," + (tokenStart + 1) + ">");
                     nextState = 0;
                     j--;
                     break;
             }
             state = nextState;
         }
-        row_counter++;
+        ArrayList<ArrayList<String>> kha = new ArrayList<ArrayList<String>>();
+        ArrayList<String> aux;
+        String [] spltted;
+        for( String re: resp ){
+            spltted = re.split("-");
+            aux = new ArrayList<String>();
+            aux.add(spltted[0]);
+            aux.add(spltted[1]);
+            kha.add(aux);
+        }
 
-        return resp;
+        return kha;
     }
 
     public static void main( String[] args ) throws IOException {
         Lexer check = new Lexer();
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String e;
-        ArrayList<String> resp;
+        ArrayList< ArrayList<String>> resp;
         while (( e = br.readLine())!=null) {
-            resp = check.analyseLine(e);
-            for( String lel : resp ){
+            System.out.println( check.analyseLine(e) );
+            /*resp = check.analyseLine(e);
+            for( ArrayList<String> lel : resp ){
                 System.out.println( lel );
-            }
-            /*e = e + "\0";
-            state = 0; nextState = 0; tokenStart = 0;
-            for(int j = 0; j < e.length() && !error; j++) {
-                switch (state){
-                    case -1:
-                        break;
-                    case 0:
-                        if(e.charAt(j) == ' ' || e.charAt(j) == '\t')
-                            nextState = 0;
-                        else if (check.isAlphabetic(e.charAt(j))) {
-                            nextState = 2;
-                            tokenStart = j;
-                        }else if (check.isNumber(e.charAt(j))) {
-                            nextState = 4;
-                            tokenStart = j;
-                        }else if (e.charAt(j) == '\'' || e.charAt(j) == '\"') {
-                            nextState = 1;
-                            tokenStart = j + 1;
-                        }else if (e.charAt(j) == '/') {
-                            nextState = 11;
-                            tokenStart = j;
-                        }else if ( e.charAt(j) == '<' ){
-                            nextState = 17;
-                            tokenStart = j;
-                        }else if( e.charAt(j) == '>' ){
-                            nextState = 18;
-                            tokenStart = j;
-                        }else if (  dic.containsKey(e.substring(j,j+1)) && dic.get(e.substring(j, j+1)) != 1 ) {
-                            nextState = 13;
-                            tokenStart = j;
-                        }else if ( e.charAt(j) == '\0' )
-                            nextState = -1;
-                        else{
-                            nextState = 8;
-                            j--;
-                        }
-                        break;
-                    case 1:
-                        if( e.charAt(j) != '\'' &&  e.charAt(j) != '\"' )
-                            nextState = 1;
-                        else{
-                            System.out.println("<token_cadena," + e.substring(tokenStart, j) + "," + row_counter + "," + (tokenStart) + ">");
-                            nextState = 0;
-                        }
-                        if (  j == e.length()-1  ) {
-                            nextState = 9;
-                            tokenStart--;
-                            j--;
-                        }
-                        break;
-
-                    case 2:
-                        if(check.isAlphabetic(e.charAt(j)) || check.isNumber(e.charAt(j)) || e.charAt(j) == '_')
-                            nextState = 2;
-                        else {
-                            nextState = 3;
-                            j--;
-                        }
-                        break;
-                    case 3:
-                        t = e.substring(tokenStart, j).toLowerCase();
-                        if ( dic.containsKey(t) ) {
-                            if( dic.get(t) != 1 )
-                                System.out.println("<" + dic_token.get(t) + "," + row_counter + "," + (tokenStart + 1) + ">");
-                            else
-                                System.out.println("<" + t + "," + row_counter + "," + (tokenStart + 1) + ">");
-                        }else
-                            System.out.println("<id," + t + "," + row_counter + "," + (tokenStart + 1) + ">");
-                        nextState = 0;
-                        j--;
-                        break;
-                    case 4:
-                        if( check.isNumber(e.charAt(j)) )
-                            nextState = 4;
-                        else if( e.charAt(j) == '.' )
-                            nextState = 6;
-                        else if ( check.isAlphabetic(e.charAt(j)) ){
-                            nextState = 9;
-                            j--;
-                        }else{
-                            nextState = 5;
-                            j--;
-                        }
-                        break;
-                    case 5:
-                        System.out.println("<token_entero," + e.substring(tokenStart,j) + "," + row_counter + "," + (tokenStart + 1) + ">");
-                        nextState = 0;
-                        j--;
-                        break;
-                    case 6:
-                        if( check.isNumber(e.charAt(j)) )
-                            nextState = 7;
-                        else{
-                            nextState = 5;
-                            j-=2;
-                        }
-                        break;
-                    case 7:
-                        if( check.isNumber(e.charAt(j)) )
-                            nextState = 7;
-                        else {
-                            System.out.println("<token_real," + e.substring(tokenStart, j) + "," + row_counter + "," + (tokenStart + 1) + ">");
-                            j--;
-                            nextState = 0;
-                        }
-                        break;
-
-                    case 8:
-                        System.out.println(">>> Error lexico (linea: " + row_counter + ", posicion: " + (j + 1) + ")");
-                        error = true;
-                        break;
-                    case 9:
-                        System.out.println(">>> Error lexico (linea: " + row_counter + ", posicion: " + (tokenStart + 1) + ")");
-                        error = true;
-                        break;
-
-                    case 11:
-                        if(e.charAt(j) == '/')
-                            nextState = 15;
-                        else{
-                            nextState = 16;
-                            j--;
-                        }
-                        break;
-                    case 13:
-                        t = e.substring(tokenStart, j);
-                        System.out.println("<" + dic_token.get(t) + "," + row_counter + "," + (tokenStart + 1) + ">");
-                        nextState = 0;
-                        j--;
-                        break;
-                    case 15:
-                        nextState = 15;
-                        break;
-                    case 16:
-                        System.out.println("<token_div," + row_counter + "," + (tokenStart + 1) + ">");
-                        nextState = 0;
-                        j--;
-                        break;
-                    case 17:
-                        if( e.charAt(j) == '-' )
-                            nextState = 19;
-                        else if( e.charAt(j) == '=')
-                            nextState = 20;
-                        else if( e.charAt(j) == '>')
-                            nextState = 21;
-                        else{
-                            System.out.println("<token_menor," + row_counter + "," + (tokenStart + 1) + ">");
-                            nextState = 0;
-                            j--;
-                        }
-                        break;
-                    case 18:
-                        if( e.charAt(j) == '=')
-                            nextState = 22;
-                        else{
-                            System.out.println("<token_mayor," + row_counter + "," + (tokenStart + 1) + ">");
-                            nextState = 0;
-                            j--;
-                        }
-                        break;
-                    case 19:
-                        System.out.println("<token_asig," + row_counter + "," + (tokenStart + 1) + ">");
-                        nextState = 0;
-                        j--;
-                        break;
-                    case 20:
-                        System.out.println("<token_menor_igual," + row_counter + "," + (tokenStart + 1) + ">");
-                        nextState = 0;
-                        j--;
-                        break;
-                    case 21:
-                        System.out.println("<token_dif," + row_counter + "," + (tokenStart + 1) + ">");
-                        nextState = 0;
-                        j--;
-                        break;
-                    case 22:
-                        System.out.println("<token_mayor_igual," + row_counter + "," + (tokenStart + 1) + ">");
-                        nextState = 0;
-                        j--;
-                        break;
-                }
-                state = nextState;
-            }
-            row_counter++;*/
+            }*/
         }
     }
 }
